@@ -222,15 +222,13 @@ func SprayEmailsADFSO365(
 			defer passFile.Close()
 			passScanner := bufio.NewScanner(passFile)
 
-			// Канал для ограничения количества горутин
+			//multithreading
 			concurrentLimit := threads
 			sem := make(chan struct{}, concurrentLimit)
-
-			// WaitGroup для ожидания завершения всех горутин
 			var wg sync.WaitGroup
 
 			for passScanner.Scan() {
-				if lockoutCount == (lockout - 1) {
+				if lockoutCount == (lockout - 1) && lockoutDelay != 0 {
 					color.Blue("[+] Cooling Down Lockout Time Period For " + strconv.Itoa(lockoutDelay) + " minutes")
 					time.Sleep(time.Duration(lockoutDelay) * time.Minute)
 					lockoutCount = 1
@@ -247,13 +245,11 @@ func SprayEmailsADFSO365(
 				for emailScanner.Scan() {
 					wg.Add(1)
 
-					// Запускаем горутину для обработки каждой строки email
 					go func(email string, password string) {
 						defer wg.Done()
 
-						// Захватываем слот в канале
 						sem <- struct{}{}
-						defer func() { <-sem }() // Освобождаем слот после выполнения горутины
+						defer func() { <-sem }()
 
 						// Выполняем SprayADFSO365
 						SprayADFSO365(domainName, authURL, email, password, "file", logFile)
