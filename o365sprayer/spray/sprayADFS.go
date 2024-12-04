@@ -67,6 +67,8 @@ func SprayADFSO365(
 	if resp.StatusCode != 302 && command == "standalone" {
 		color.Red("[+] Invalid Credential : " + email + " - " + password)
 	}
+	go userChecked()
+	fmt.Printf("\rProgress: [%3d%%]", checkedUsers)
 }
 
 
