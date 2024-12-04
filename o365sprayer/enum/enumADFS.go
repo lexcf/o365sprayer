@@ -108,10 +108,36 @@ func EnumEmailsADFSO365(domainName string, command string, email string, filepat
 			}
 			defer file.Close()
 			scanner := bufio.NewScanner(file)
+
+			// Создаем канал с размерами буфера, чтобы ограничить количество одновременно работающих горутин
+			concurrentLimit := 40
+			sem := make(chan struct{}, concurrentLimit)
+
+			// Для ожидания завершения всех горутин
+			var wg sync.WaitGroup
+
+			// Считываем строки из файла
 			for scanner.Scan() {
-				ValidateEmailADFSO365(command, scanner.Text(), logFile)
-				time.Sleep(time.Duration(delay))
+				// Запускаем горутину для каждой строки
+				wg.Add(1)
+				go func(email string) {
+					defer wg.Done()
+
+					// Пытаемся захватить место в канале (блокирует, если превышен лимит)
+					sem <- struct{}{}
+					defer func() { <-sem }() // Освобождаем место в канале после завершения работы горутины
+
+					// Выполняем вашу валидацию
+					ValidateEmailADFSO365("command", email, logFile)
+
+				}(scanner.Text())
+
+				// Небольшая пауза для имитации задержки, можно настроить в зависимости от необходимости
+				//time.Sleep(10 * time.Millisecond)
 			}
+
+			// Ожидаем завершения всех горутин
+			wg.Wait()
 			if err := scanner.Err(); err != nil {
 				log.Fatal(err)
 			}
