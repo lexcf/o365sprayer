@@ -27,7 +27,6 @@ func SprayManagedO365(
 	command string,
 	maxLockouts int,
 	file *os.File,
-	threads int,
 ) {
 
 	getOauthTokenRequestJSON := url.Values{}
@@ -74,6 +73,8 @@ func SprayManagedO365(
 
 }
 
+
+//TODO multithreading
 func SprayEmailsManagedO365(
 	domainName string,
 	email string,
@@ -84,7 +85,20 @@ func SprayEmailsManagedO365(
 	lockout int,
 	lockoutDelay int,
 	maxLockouts int,
-) {
+	threads int,
+) {	
+
+	semaphore := make(chan struct{}, threads)
+	var wg sync.WaitGroup
+	semaphore <- struct{}{}
+	wg.Add(1)
+	go func() {
+		defer func() {
+			<-semaphore
+			wg.Done()
+		}()
+
+
 	color.Yellow("[+] Spraying For O365 Emails - Managed")
 	timeStamp := strconv.Itoa(time.Now().Year()) + strconv.Itoa(int(time.Now().Month())) + strconv.Itoa(int(time.Now().Hour())) + strconv.Itoa(int(time.Now().Minute())) + strconv.Itoa(int(time.Now().Second()))
 	fileName := domainName + "_spray_" + timeStamp
@@ -103,7 +117,6 @@ func SprayEmailsManagedO365(
 				"standalone",
 				maxLockouts,
 				logFile,
-				threads,
 			)
 		}
 		if len(password) == 0 && len(passwordFilePath) > 0 {
@@ -215,4 +228,8 @@ func SprayEmailsManagedO365(
 			}
 		}
 	}
+
+	}()
+
+	wg.Wait()
 }

@@ -54,6 +54,8 @@ func SprayADFSO365(
 	}
 }
 
+
+//TODO multithreading
 func SprayEmailsADFSO365(
 	domainName string,
 	authURL string,
@@ -67,6 +69,17 @@ func SprayEmailsADFSO365(
 	maxLockouts int,
 	threads int,
 ) {
+
+	semaphore := make(chan struct{}, threads)
+	var wg sync.WaitGroup
+	semaphore <- struct{}{}
+	wg.Add(1)
+	go func() {
+		defer func() {
+			<-semaphore
+			wg.Done()
+		}()
+
 	color.Yellow("[+] Spraying For O365 Emails - ADFS")
 	timeStamp := strconv.Itoa(time.Now().Year()) + strconv.Itoa(int(time.Now().Month())) + strconv.Itoa(int(time.Now().Hour())) + strconv.Itoa(int(time.Now().Minute())) + strconv.Itoa(int(time.Now().Second()))
 	fileName := domainName + "_spray_" + timeStamp
@@ -85,7 +98,6 @@ func SprayEmailsADFSO365(
 				password,
 				"standalone",
 				logFile,
-				threads,
 			)
 		}
 		if len(password) == 0 && len(passwordFilePath) > 0 {
@@ -197,4 +209,8 @@ func SprayEmailsADFSO365(
 			}
 		}
 	}
+
+	}()
+
+	wg.Wait()
 }
