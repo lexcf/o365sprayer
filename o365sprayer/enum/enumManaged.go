@@ -120,6 +120,7 @@ func EnumEmailsManagedO365(domainName string, command string, email string, file
 				color.Red("[-] No Valid O365 Email Found !")
 			}
 		}
+	}
 
 	}()
 

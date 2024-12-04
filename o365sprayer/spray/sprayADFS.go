@@ -165,7 +165,7 @@ func SprayEmailsADFSO365(
 					SprayADFSO365(
 						domainName,
 						authURL,
-						email
+						email,
 						password,
 						"file",
 						logFile,
