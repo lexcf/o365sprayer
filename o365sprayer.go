@@ -24,7 +24,7 @@ func main() {
 
 	flag.Usage = func() {
 		flagSet := flag.CommandLine
-		order := []string{"d", "u", "p", "U", "P", "enum", "spray", "delay", "lockout", "lockoutDelay", "max-lockout"}
+		order := []string{"d", "u", "p", "U", "P", "enum", "spray", "delay", "lockout", "lockoutDelay", "max-lockout","t"}
 		for _, name := range order {
 			flag := flagSet.Lookup(name)
 			fmt.Printf("  -%s ", flag.Name)
@@ -55,7 +55,7 @@ func main() {
 			*lockout,
 			*lockoutDelay,
 			*maxLockouts,
-			*threads
+			*threads,
 		)
 
 	}

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -88,7 +87,7 @@ func EnumEmailsManagedO365(domainName string, command string, email string, file
 		}
 		defer logFile.Close()
 		if command == "standalone" {
-			ValidateEmailManagedO365(command, email, logFile)
+			ValidateEmailManagedO365(command, email, logFile, threads)
 		}
 		if command == "file" {
 			file, err := os.Open(filepath)
@@ -98,7 +97,7 @@ func EnumEmailsManagedO365(domainName string, command string, email string, file
 			defer file.Close()
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
-				ValidateEmailManagedO365(command, scanner.Text(), logFile)
+				ValidateEmailManagedO365(command, scanner.Text(), logFile, threads)
 				time.Sleep(time.Duration(delay))
 			}
 			if err := scanner.Err(); err != nil {

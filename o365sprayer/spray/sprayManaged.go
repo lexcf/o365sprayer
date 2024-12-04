@@ -27,7 +27,7 @@ func SprayManagedO365(
 	command string,
 	maxLockouts int,
 	file *os.File,
-	threads int
+	threads int,
 ) {
 
 	semaphore := make(chan struct{}, threads)
@@ -98,6 +98,7 @@ func SprayEmailsManagedO365(
 	lockout int,
 	lockoutDelay int,
 	maxLockouts int,
+	threads int,
 ) {
 	color.Yellow("[+] Spraying For O365 Emails - Managed")
 	timeStamp := strconv.Itoa(time.Now().Year()) + strconv.Itoa(int(time.Now().Month())) + strconv.Itoa(int(time.Now().Hour())) + strconv.Itoa(int(time.Now().Minute())) + strconv.Itoa(int(time.Now().Second()))
@@ -117,6 +118,7 @@ func SprayEmailsManagedO365(
 				"standalone",
 				maxLockouts,
 				logFile,
+				threads,
 			)
 		}
 		if len(password) == 0 && len(passwordFilePath) > 0 {
@@ -141,6 +143,7 @@ func SprayEmailsManagedO365(
 					"file",
 					maxLockouts,
 					logFile,
+					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -170,6 +173,7 @@ func SprayEmailsManagedO365(
 					"file",
 					maxLockouts,
 					logFile,
+					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -211,6 +215,7 @@ func SprayEmailsManagedO365(
 						"file",
 						maxLockouts,
 						logFile,
+						threads,
 					)
 					time.Sleep(time.Duration(delay))
 				}

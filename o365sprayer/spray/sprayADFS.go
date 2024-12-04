@@ -25,7 +25,7 @@ func SprayADFSO365(
 	password string,
 	command string,
 	file *os.File,
-	threads int
+	threads int,
 ) {
 	semaphore := make(chan struct{}, threads)
 	var wg sync.WaitGroup
@@ -79,6 +79,7 @@ func SprayEmailsADFSO365(
 	lockout int,
 	lockoutDelay int,
 	maxLockouts int,
+	threads int,
 ) {
 	color.Yellow("[+] Spraying For O365 Emails - ADFS")
 	timeStamp := strconv.Itoa(time.Now().Year()) + strconv.Itoa(int(time.Now().Month())) + strconv.Itoa(int(time.Now().Hour())) + strconv.Itoa(int(time.Now().Minute())) + strconv.Itoa(int(time.Now().Second()))
@@ -98,6 +99,7 @@ func SprayEmailsADFSO365(
 				password,
 				"standalone",
 				logFile,
+				threads,
 			)
 		}
 		if len(password) == 0 && len(passwordFilePath) > 0 {
@@ -122,6 +124,7 @@ func SprayEmailsADFSO365(
 					scanner.Text(),
 					"file",
 					logFile,
+					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -151,6 +154,7 @@ func SprayEmailsADFSO365(
 					password,
 					"file",
 					logFile,
+					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -192,6 +196,7 @@ func SprayEmailsADFSO365(
 						passScanner.Text(),
 						"file",
 						logFile,
+						threads,
 					)
 					time.Sleep(time.Duration(delay))
 				}

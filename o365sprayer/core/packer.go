@@ -28,7 +28,7 @@ func StartO365Sprayer(
 	fmt.Println("[*] Domain Name     : " + enumResult.DomainName)
 	fmt.Println("[*] Federation Name : " + enumResult.FederationBrandName)
 	fmt.Println("[*] Tenant ID       : " + enumResult.TenandId)
-	fmt.Println("[*] Threads		 : " + threads )
+	//fmt.Println("[*] Threads		 : " + threads )
 	if enumResult.NameSpaceType == "Managed" {
 		color.Yellow("[+] Using Managed O365")
 	}
@@ -75,7 +75,7 @@ func StartO365Sprayer(
 				lockout,
 				lockoutDelay,
 				maxLockouts,
-				threads
+				threads,
 			)
 		} else {
 			spray.SprayEmailsManagedO365(
@@ -88,7 +88,7 @@ func StartO365Sprayer(
 				lockout,
 				lockoutDelay,
 				maxLockouts,
-				threads
+				threads,
 			)
 		}
 	}

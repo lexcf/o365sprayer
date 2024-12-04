@@ -111,7 +111,7 @@ func EnumEmailsADFSO365(domainName string, command string, email string, filepat
 		}
 		defer logFile.Close()
 		if command == "standalone" {
-			ValidateEmailADFSO365(command, email, logFile)
+			ValidateEmailADFSO365(command, email, logFile, threads)
 		}
 		if command == "file" {
 			file, err := os.Open(filepath)
@@ -121,7 +121,7 @@ func EnumEmailsADFSO365(domainName string, command string, email string, filepat
 			defer file.Close()
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
-				ValidateEmailADFSO365(command, scanner.Text(), logFile)
+				ValidateEmailADFSO365(command, scanner.Text(), logFile, threads)
 				time.Sleep(time.Duration(delay))
 			}
 			if err := scanner.Err(); err != nil {
