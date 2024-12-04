@@ -247,12 +247,12 @@ func SprayEmailsADFSO365(
 				if err := emailScanner.Err(); err != nil {
 					log.Fatal(err)
 				}
+				wg.Wait()
 			}
 			if err := passScanner.Err(); err != nil {
 				log.Fatal(err)
 			}
 
-			wg.Wait()
 
 			if sprayedUsers > 0 {
 				color.Yellow("[+] " + strconv.Itoa(sprayedUsers) + " Valid O365 Credentials Found !")
