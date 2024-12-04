@@ -202,7 +202,7 @@ func SprayEmailsADFSO365(
 		}
 
 		if len(password) == 0 && len(passwordFilePath) > 0 {
-			lockoutCount := 0
+			//lockoutCount := 0
 			passFile, err := os.Open(passwordFilePath)
 			if err != nil {
 				log.Fatal(err)
@@ -253,7 +253,7 @@ func SprayEmailsADFSO365(
 			}
 
 			wg.Wait()
-			
+
 			if sprayedUsers > 0 {
 				color.Yellow("[+] " + strconv.Itoa(sprayedUsers) + " Valid O365 Credentials Found !")
 			} else {
