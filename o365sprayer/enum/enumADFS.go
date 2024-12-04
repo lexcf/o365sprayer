@@ -15,8 +15,8 @@ import (
 	"time"
 	"sync"
 
-	"o365sprayer/constants"
-	"o365sprayer/logging"
+	"github.com/lexcf/o365sprayer/o365sprayer/constants"
+	"github.com/lexcf/o365sprayer/o365sprayer/logging"
 
 	"github.com/fatih/color"
 )

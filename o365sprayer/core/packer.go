@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"o365sprayer/enum"
-	"o365sprayer/spray"
+	"github.com/lexcf/o365sprayer/o365sprayer/enum"
+	"github.com/lexcf/o365sprayer/o365sprayer/spray"
 )
 
 func StartO365Sprayer(

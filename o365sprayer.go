@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lexcf/o365sprayer/core"
+	"github.com/lexcf/o365sprayer/o365sprayer/core"
 )
 
 func main() {
