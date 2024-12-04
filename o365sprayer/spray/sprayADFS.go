@@ -68,7 +68,7 @@ func SprayADFSO365(
 		color.Red("[+] Invalid Credential : " + email + " - " + password)
 	}
 	go userChecked()
-	fmt.Printf("\rProgress: [%3d%%]", checkedUsers)
+	fmt.Printf("\rProgress: [%3d%]", checkedUsers)
 }
 
 
