@@ -257,7 +257,7 @@ func SprayEmailsADFSO365(
 
 						// Выполняем SprayADFSO365
 						SprayADFSO365(domainName, authURL, email, password, "file", logFile)
-						fmt.Printf("\rProgress: [%3d:%3d]", password, checkedUsers)
+						fmt.Printf("\rProgress: [%3s:%3d]", password, checkedUsers)
 						// Пауза
 						time.Sleep(time.Duration(delay))
 					}(emailScanner.Text(), passScanner.Text())
