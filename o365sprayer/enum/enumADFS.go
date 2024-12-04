@@ -33,16 +33,7 @@ func accountLocked() {
 	lockedAccounts += 1
 }
 
-func ValidateEmailADFSO365(command string, email string, file *os.File, threads int) {
-	semaphore := make(chan struct{}, threads)
-	var wg sync.WaitGroup
-	semaphore <- struct{}{}
-	wg.Add(1)
-	go func() {
-		defer func() {
-			<-semaphore
-			wg.Done()
-		}()
+func ValidateEmailADFSO365(command string, email string, file *os.File) {
 	
 		getOauthTokenRequestJSON := url.Values{}
 		getOauthTokenRequestJSON.Add("resource", constants.RESOURCES[rand.Intn(len(constants.RESOURCES))])
@@ -86,9 +77,6 @@ func ValidateEmailADFSO365(command string, email string, file *os.File, threads 
 				color.Red("[-] Invalid User : " + email)
 			}
 		}
-	}()
-
-	wg.Wait()
 }
 
 func EnumEmailsADFSO365(domainName string, command string, email string, filepath string, delay float64, threads int) {
@@ -111,7 +99,7 @@ func EnumEmailsADFSO365(domainName string, command string, email string, filepat
 		}
 		defer logFile.Close()
 		if command == "standalone" {
-			ValidateEmailADFSO365(command, email, logFile, threads)
+			ValidateEmailADFSO365(command, email, logFile)
 		}
 		if command == "file" {
 			file, err := os.Open(filepath)
@@ -121,7 +109,7 @@ func EnumEmailsADFSO365(domainName string, command string, email string, filepat
 			defer file.Close()
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
-				ValidateEmailADFSO365(command, scanner.Text(), logFile, threads)
+				ValidateEmailADFSO365(command, scanner.Text(), logFile)
 				time.Sleep(time.Duration(delay))
 			}
 			if err := scanner.Err(); err != nil {

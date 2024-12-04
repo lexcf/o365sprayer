@@ -25,45 +25,32 @@ func counterManaged() {
 	countManaged += 1
 }
 
-func ValidateEmailManagedO365(command string, email string, file *os.File, threads int) {
+func ValidateEmailManagedO365(command string, email string, file *os.File,) {
 
-	semaphore := make(chan struct{}, threads)
-	var wg sync.WaitGroup
-	semaphore <- struct{}{}
-	wg.Add(1)
-	go func() {
-		defer func() {
-			<-semaphore
-			wg.Done()
-		}()
-
-		getCredentialTypeRequestJSON := constants.GetCredentialTypeRequestJSON{
-			Username: email,
-		}
-		jsonData, _ := json.Marshal(getCredentialTypeRequestJSON)
-		client := &http.Client{}
-		req, err := http.NewRequest("POST", constants.GET_CREDENTIAL_TYPE, bytes.NewBuffer(jsonData))
-		req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
-		req.Header.Add("Content-Type", "application/json")
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		var getCredentialTypeResponseJSON constants.GetCredentialTypeResponseJSON
-		json.Unmarshal(body, &getCredentialTypeResponseJSON)
-		if getCredentialTypeResponseJSON.IfExistsResult == 0 {
-			go counterManaged()
-			color.Green("[*] Valid User : " + email)
-			logging.LogEnumeratedAccount(file, email)
-		}
-		if command == "standalone" && getCredentialTypeResponseJSON.IfExistsResult != 0 {
-			color.Red("[-] Invalid User : " + email)
-		}
-	}()
-
-	wg.Wait()
+	getCredentialTypeRequestJSON := constants.GetCredentialTypeRequestJSON{
+		Username: email,
+	}
+	jsonData, _ := json.Marshal(getCredentialTypeRequestJSON)
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", constants.GET_CREDENTIAL_TYPE, bytes.NewBuffer(jsonData))
+	req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	var getCredentialTypeResponseJSON constants.GetCredentialTypeResponseJSON
+	json.Unmarshal(body, &getCredentialTypeResponseJSON)
+	if getCredentialTypeResponseJSON.IfExistsResult == 0 {
+		go counterManaged()
+		color.Green("[*] Valid User : " + email)
+		logging.LogEnumeratedAccount(file, email)
+	}
+	if command == "standalone" && getCredentialTypeResponseJSON.IfExistsResult != 0 {
+		color.Red("[-] Invalid User : " + email)
+	}
 }
 
 func EnumEmailsManagedO365(domainName string, command string, email string, filepath string, delay float64, threads int) {
@@ -87,7 +74,7 @@ func EnumEmailsManagedO365(domainName string, command string, email string, file
 		}
 		defer logFile.Close()
 		if command == "standalone" {
-			ValidateEmailManagedO365(command, email, logFile, threads)
+			ValidateEmailManagedO365(command, email, logFile)
 		}
 		if command == "file" {
 			file, err := os.Open(filepath)
@@ -97,7 +84,7 @@ func EnumEmailsManagedO365(domainName string, command string, email string, file
 			defer file.Close()
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
-				ValidateEmailManagedO365(command, scanner.Text(), logFile, threads)
+				ValidateEmailManagedO365(command, scanner.Text(), logFile)
 				time.Sleep(time.Duration(delay))
 			}
 			if err := scanner.Err(); err != nil {
