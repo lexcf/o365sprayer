@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/securebinary/o365sprayer/o365sprayer/constants"
+	"o365sprayer/constants"
 
 	"github.com/fatih/color"
 )

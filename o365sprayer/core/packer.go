@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/securebinary/o365sprayer/o365sprayer/enum"
-	"github.com/securebinary/o365sprayer/o365sprayer/spray"
+	"o365sprayer/enum"
+	"o365sprayer/spray"
 )
 
 func StartO365Sprayer(
@@ -21,12 +21,14 @@ func StartO365Sprayer(
 	lockout int,
 	lockoutDelay int,
 	maxLockouts int,
+	threads int,
 ) {
 	enumResult := CheckO365(domainName)
 	adfsCheck := false
 	fmt.Println("[*] Domain Name     : " + enumResult.DomainName)
 	fmt.Println("[*] Federation Name : " + enumResult.FederationBrandName)
 	fmt.Println("[*] Tenant ID       : " + enumResult.TenandId)
+	fmt.Println("[*] Threads		 : " + threads )
 	if enumResult.NameSpaceType == "Managed" {
 		color.Yellow("[+] Using Managed O365")
 	}
@@ -45,17 +47,17 @@ func StartO365Sprayer(
 	if validateEmail {
 		if !adfsCheck {
 			if len(email) > 0 {
-				enum.EnumEmailsManagedO365(domainName, "standalone", email, "", delay)
+				enum.EnumEmailsManagedO365(domainName, "standalone", email, "", delay, threads)
 			}
 			if len(emailFile) > 0 {
-				enum.EnumEmailsManagedO365(domainName, "file", "", emailFile, delay)
+				enum.EnumEmailsManagedO365(domainName, "file", "", emailFile, delay, threads)
 			}
 		} else {
 			if len(email) > 0 {
-				enum.EnumEmailsADFSO365(domainName, "standalone", email, "", delay)
+				enum.EnumEmailsADFSO365(domainName, "standalone", email, "", delay, threads)
 			}
 			if len(emailFile) > 0 {
-				enum.EnumEmailsADFSO365(domainName, "file", "", emailFile, delay)
+				enum.EnumEmailsADFSO365(domainName, "file", "", emailFile, delay, threads)
 			}
 		}
 	}
@@ -73,6 +75,7 @@ func StartO365Sprayer(
 				lockout,
 				lockoutDelay,
 				maxLockouts,
+				threads
 			)
 		} else {
 			spray.SprayEmailsManagedO365(
@@ -85,6 +88,7 @@ func StartO365Sprayer(
 				lockout,
 				lockoutDelay,
 				maxLockouts,
+				threads
 			)
 		}
 	}

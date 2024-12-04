@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/securebinary/o365sprayer/o365sprayer/core"
+	"github.com/lexcf/o365sprayer/core"
 )
 
 func main() {
@@ -20,6 +20,8 @@ func main() {
 	lockout := flag.Int("lockout", 5, "Number of incorrect attempts for account lockout")
 	lockoutDelay := flag.Int("lockoutDelay", 15, "Lockout cool down time")
 	maxLockouts := flag.Int("max-lockout", 10, "Maximum number of lockout accounts")
+	threads := flag.Int("t", 40, "Number of threads to use")
+
 	flag.Usage = func() {
 		flagSet := flag.CommandLine
 		order := []string{"d", "u", "p", "U", "P", "enum", "spray", "delay", "lockout", "lockoutDelay", "max-lockout"}
@@ -53,6 +55,7 @@ func main() {
 			*lockout,
 			*lockoutDelay,
 			*maxLockouts,
+			*threads
 		)
 
 	}

