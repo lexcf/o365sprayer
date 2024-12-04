@@ -33,7 +33,7 @@ func SprayADFSO365(
 			color.Red("[!] Panic occurred: %v", r)
 			log.Println("[!] Panic: ", r)
 		}
-	}(
+	}()
 
 	adfsLogin := url.Values{}
 	adfsLogin.Add("AuthMethod", "FormsAuthentication")
