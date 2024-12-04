@@ -27,6 +27,14 @@ func SprayADFSO365(
 	file *os.File,
 ) {
 
+	defer func() {
+		// Recover from panic and log the error if any
+		if r := recover(); r != nil {
+			color.Red("[!] Panic occurred: %v", r)
+			log.Println("[!] Panic: ", r)
+		}
+	}(
+
 	adfsLogin := url.Values{}
 	adfsLogin.Add("AuthMethod", "FormsAuthentication")
 	adfsLogin.Add("UserName", email)
@@ -40,6 +48,13 @@ func SprayADFSO365(
 	req.Header.Add("User-Agent", constants.USER_AGENTS[rand.Intn(len(constants.USER_AGENTS))])
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
+	if err != nil {
+		// If error making the HTTP request, log it and return
+		color.Red("[!] Error during request: %v", err)
+		log.Println("[!] Error during request:", err)
+		return
+	}
+	defer resp.Body.Close()
 	if err != nil {
 		log.Fatalln(err)
 	}
