@@ -79,6 +79,8 @@ func SprayManagedO365(
 		}
 	}
 
+	go userChecked()
+
 }
 
 
