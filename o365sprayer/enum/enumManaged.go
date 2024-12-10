@@ -110,6 +110,10 @@ func EnumEmailsManagedO365(domainName string, command string, email string, file
 				// Небольшая пауза для имитации задержки, можно настроить в зависимости от необходимости
 				//time.Sleep(10 * time.Millisecond)
 				time.Sleep(time.Duration(delay))
+			
+			}
+			
+			wg.Wait()
 
 			if err := scanner.Err(); err != nil {
 				log.Fatal(err)
@@ -120,7 +124,6 @@ func EnumEmailsManagedO365(domainName string, command string, email string, file
 				color.Red("[-] No Valid O365 Email Found !")
 			}
 		}
-	}
 
 	}()
 

