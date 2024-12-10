@@ -24,26 +24,28 @@
  - Provide number of attempts which triggers account lockout
  - Provide cool down time for account lockout
  - Provide maximum number of account lockouts to tolerate while spraying
+ - Add multithreading
 
 ## Installation
 
-`O365 Sprayer` was built using go1.18.4. Make sure you use latest version of [Go](https://go.dev/doc/install) to install successfully. Run the following command to install the latest version:
-
 ```bash
-go install -v github.com/securebinary/o365sprayer@latest
+git clone https://github.com/lexcf/o365sprayer.git
+cd o365sprayer
+go run o365sprayer.go
 ```
 
 ## Usage
 
 ```bash
-aidenpearce369@horus~ o365sprayer
+aidenpearce369@horus~ go run o365sprayer.go
 
    ____                              ___    _
   / __/ ___  ____ __ __  ____ ___   / _ )  (_)  ___  ___ _  ____  __ __
  _\ \  / -_)/ __// // / / __// -_) / _  | / /  / _ \/ _  / / __/ / // /
 /___/  \__/ \__/ \_,_/ /_/   \__/ /____/ /_/  /_//_/\_,_/ /_/    \_, /
                                                                 /___/
-                                        O365 Sprayer v1.0.1
+             O365 Sprayer v1.0.1 (fork by @lexcf, multithread)
+
   -d
       Target domain
   -u
@@ -66,6 +68,8 @@ aidenpearce369@horus~ o365sprayer
       Lockout cool down time
   -max-lockout [DEFAULT : 10]
       Maximum number of lockout accounts
+  -t [DEFAULT : 40]
+      Number of threads to use
 
 ```
 
